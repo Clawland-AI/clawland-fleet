@@ -1,0 +1,6 @@
+/fleet
+*.exe
+*.test
+*.out
+.env
+vendor/
