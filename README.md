@@ -51,7 +51,74 @@ Clawland Fleet is the **nervous system** connecting cloud and edge. It provides 
 
 ## Status
 
-🚧 **Pre-Alpha** — Architecture design phase. Looking for contributors!
+✅ **Node Registration & Heartbeat** — Core fleet management operational!  
+🚧 **Event Hub & Command Dispatch** — Coming soon
+
+## Quick Start
+
+### Run Fleet Manager
+
+```bash
+# Default port 8080
+go run ./cmd/fleet
+
+# Custom port
+PORT=3000 go run ./cmd/fleet
+```
+
+### Test Endpoints
+
+```bash
+# Register a node
+curl -X POST http://localhost:8080/api/v1/fleet/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "node_id": "microclaw-test-01",
+    "node_type": "microclaw",
+    "capabilities": ["dht22", "mqtt"],
+    "location": "office"
+  }'
+
+# Send heartbeat
+curl -X POST http://localhost:8080/api/v1/fleet/heartbeat \
+  -H "Content-Type: application/json" \
+  -d '{
+    "node_id": "microclaw-test-01",
+    "uptime_seconds": 3600
+  }'
+
+# List all nodes
+curl http://localhost:8080/api/v1/fleet/nodes
+
+# Get specific node
+curl http://localhost:8080/api/v1/fleet/nodes/microclaw-test-01
+```
+
+## Documentation
+
+- **[Node Registration & Heartbeat](docs/node-registration.md)** — API reference and implementation details
+- **[OpenAPI Specification](openapi.yaml)** — Full REST API schema
+
+## Development
+
+### Run Tests
+
+```bash
+go test ./... -v
+```
+
+### Project Structure
+
+```
+clawland-fleet/
+├── cmd/fleet/          # Fleet Manager entry point
+├── pkg/fleet/          # Core business logic
+│   ├── registry.go     # Node registry
+│   ├── handlers.go     # HTTP handlers
+│   └── *_test.go       # Unit tests
+├── docs/               # Documentation
+└── openapi.yaml        # API specification
+```
 
 ## License
 
