@@ -60,3 +60,25 @@ func (r *Registry) List() []*Node {
 	}
 	return nodes
 }
+
+// Get retrieves a specific node by ID.
+func (r *Registry) Get(nodeID string) *Node {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	return r.nodes[nodeID]
+}
+
+// MarkOffline marks nodes as offline if they haven't sent heartbeat recently.
+func (r *Registry) MarkOffline(timeout time.Duration) int {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	count := 0
+	now := time.Now()
+	for _, n := range r.nodes {
+		if n.Status == "online" && now.Sub(n.LastSeen) > timeout {
+			n.Status = "offline"
+			count++
+		}
+	}
+	return count
+}
