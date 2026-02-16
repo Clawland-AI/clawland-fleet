@@ -1,0 +1,660 @@
+openapi: 3.0.3
+info:
+  title: Clawland Fleet Manager API
+  description: |
+    REST API for the Clawland Fleet orchestration system.
+    
+    This API enables edge agents (MicroClaw, PicoClaw, NanoClaw) to:
+    - Register with the Fleet Manager
+    - Send periodic heartbeats
+    - Report sensor events
+    - Receive commands from the cloud
+    
+    ## Architecture
+    
+    - **L1 (Edge)**: MicroClaw, PicoClaw → Report to L2
+    - **L2 (Gateway)**: NanoClaw → Aggregates L1, reports to L3
+    - **L3 (Cloud)**: MoltClaw + Fleet Manager → Orchestrates all nodes
+    
+    ## Authentication
+    
+    All endpoints require Bearer token authentication:
+    ```
+    Authorization: Bearer <jwt_token>
+    ```
+    
+    Tokens are issued during node registration and must be refreshed periodically.
+    
+  version: 1.0.0
+  contact:
+    name: Clawland AI
+    url: https://github.com/Clawland-AI/clawland-fleet
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+
+servers:
+  - url: https://fleet.clawland.ai/api/v1
+    description: Production
+  - url: https://fleet-staging.clawland.ai/api/v1
+    description: Staging
+  - url: http://localhost:8080/api/v1
+    description: Local development
+
+tags:
+  - name: Registration
+    description: Node registration and authentication
+  - name: Heartbeat
+    description: Node health monitoring
+  - name: Events
+    description: Sensor data and event reporting
+  - name: Commands
+    description: Command dispatch to edge nodes
+  - name: Nodes
+    description: Node management and query
+
+paths:
+  /fleet/register:
+    post:
+      summary: Register a new node with the Fleet Manager
+      description: |
+        Called once when a node first joins the network.
+        Returns a JWT token for subsequent authenticated requests.
+        
+        Registration includes hardware fingerprint to prevent duplicate enrollments.
+      tags:
+        - Registration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+            examples:
+              microclaw:
+                summary: MicroClaw sensor node
+                value:
+                  node_id: "microclaw-esp32-f4cfa210"
+                  node_type: "microclaw"
+                  hardware:
+                    chip: "ESP32-S3"
+                    ram_kb: 512
+                    flash_mb: 8
+                  capabilities: ["dht22", "mqtt"]
+                  metadata:
+                    location: "office-floor-2"
+                    gateway: "nanoclaw-pi-01"
+              nanoclaw:
+                summary: NanoClaw regional gateway
+                value:
+                  node_id: "nanoclaw-pi4-8gb-001"
+                  node_type: "nanoclaw"
+                  hardware:
+                    model: "Raspberry Pi 4B"
+                    ram_kb: 8192000
+                  capabilities: ["aggregation", "offline_rules"]
+                  metadata:
+                    location: "datacenter-rack-5"
+      responses:
+        '200':
+          description: Registration successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterResponse'
+              example:
+                node_id: "microclaw-esp32-f4cfa210"
+                token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                expires_at: "2026-03-16T10:00:00Z"
+                fleet_broker: "mqtt://fleet.clawland.ai:1883"
+        '400':
+          description: Invalid request (missing fields, invalid hardware data)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Node already registered (duplicate node_id)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /fleet/heartbeat:
+    post:
+      summary: Send periodic heartbeat to indicate node is alive
+      description: |
+        Called every 60 seconds by active nodes.
+        Includes current status (uptime, free memory, sensor count).
+        
+        If heartbeat not received for 180 seconds, node is marked as DOWN.
+      tags:
+        - Heartbeat
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HeartbeatRequest'
+            example:
+              node_id: "microclaw-esp32-f4cfa210"
+              uptime_seconds: 86400
+              free_memory_kb: 200
+              sensors_active: 2
+              wifi_rssi: -52
+      responses:
+        '200':
+          description: Heartbeat acknowledged
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HeartbeatResponse'
+              example:
+                status: "ok"
+                next_heartbeat_seconds: 60
+                commands_pending: 0
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Node not found (not registered)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /fleet/events:
+    post:
+      summary: Report sensor events or alerts
+      description: |
+        Send sensor readings, alerts, or any event data to Fleet Manager.
+        
+        Events are stored in PostgreSQL and can trigger alerts/webhooks.
+        Supports batch upload (multiple events in one request).
+      tags:
+        - Events
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventsRequest'
+            example:
+              node_id: "microclaw-esp32-f4cfa210"
+              events:
+                - event_type: "sensor_reading"
+                  timestamp: "2026-02-16T10:30:00Z"
+                  sensor_type: "dht22"
+                  data:
+                    temperature: 25.0
+                    humidity: 60.0
+                - event_type: "alert"
+                  timestamp: "2026-02-16T10:31:00Z"
+                  severity: "warning"
+                  message: "Temperature above threshold"
+      responses:
+        '200':
+          description: Events accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventsResponse'
+              example:
+                events_received: 2
+                events_stored: 2
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '413':
+          description: Payload too large (max 100 events per request)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /fleet/command:
+    post:
+      summary: Poll for pending commands (used by edge nodes)
+      description: |
+        Edge nodes poll this endpoint every 60 seconds to check for commands.
+        
+        Commands can be:
+        - restart: Reboot the node
+        - update: OTA firmware update
+        - config: Update configuration
+        - custom: Execute custom action
+      tags:
+        - Commands
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandPollRequest'
+            example:
+              node_id: "microclaw-esp32-f4cfa210"
+      responses:
+        '200':
+          description: Commands available (may be empty array)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommandPollResponse'
+              examples:
+                no_commands:
+                  summary: No pending commands
+                  value:
+                    commands: []
+                restart_command:
+                  summary: Restart command
+                  value:
+                    commands:
+                      - command_id: "cmd-12345"
+                        command_type: "restart"
+                        issued_at: "2026-02-16T10:30:00Z"
+                        params: {}
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /fleet/command/ack:
+    post:
+      summary: Acknowledge command execution
+      description: |
+        Called after a node executes a command.
+        Reports success/failure and optional result data.
+      tags:
+        - Commands
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandAckRequest'
+            example:
+              command_id: "cmd-12345"
+              status: "success"
+              executed_at: "2026-02-16T10:31:00Z"
+              result:
+                message: "Node restarted successfully"
+      responses:
+        '200':
+          description: Acknowledgment received
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommandAckResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /fleet/nodes:
+    get:
+      summary: List all registered nodes
+      description: |
+        Returns paginated list of nodes with status and metadata.
+        Supports filtering by node_type, status, location.
+      tags:
+        - Nodes
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: node_type
+          in: query
+          description: Filter by node type
+          schema:
+            type: string
+            enum: [microclaw, picclaw, nanoclaw, moltclaw]
+          example: microclaw
+        - name: status
+          in: query
+          description: Filter by status
+          schema:
+            type: string
+            enum: [online, offline, down]
+          example: online
+        - name: location
+          in: query
+          description: Filter by location metadata
+          schema:
+            type: string
+          example: "office-floor-2"
+        - name: page
+          in: query
+          description: Page number (1-indexed)
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: Items per page
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: List of nodes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NodeList'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /fleet/nodes/{node_id}:
+    get:
+      summary: Get detailed information about a specific node
+      tags:
+        - Nodes
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: node_id
+          in: path
+          required: true
+          description: Node ID
+          schema:
+            type: string
+          example: "microclaw-esp32-f4cfa210"
+      responses:
+        '200':
+          description: Node details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NodeDetails'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Node not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from /fleet/register
+
+  responses:
+    Unauthorized:
+      description: Authentication failed (invalid or expired token)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Unauthorized"
+            message: "Invalid or expired JWT token"
+
+  schemas:
+    RegisterRequest:
+      type: object
+      required:
+        - node_id
+        - node_type
+        - hardware
+      properties:
+        node_id:
+          type: string
+          description: Unique node identifier (hardware-derived)
+          example: "microclaw-esp32-f4cfa210"
+        node_type:
+          type: string
+          enum: [microclaw, picclaw, nanoclaw, moltclaw]
+          description: Type of agent
+        hardware:
+          type: object
+          description: Hardware specifications
+          properties:
+            chip:
+              type: string
+              example: "ESP32-S3"
+            ram_kb:
+              type: integer
+              example: 512
+            flash_mb:
+              type: integer
+              example: 8
+            model:
+              type: string
+              example: "Raspberry Pi 4B"
+        capabilities:
+          type: array
+          items:
+            type: string
+          description: List of supported capabilities
+          example: ["dht22", "mqtt", "wifi"]
+        metadata:
+          type: object
+          additionalProperties: true
+          description: User-defined metadata
+          example:
+            location: "office-floor-2"
+            gateway: "nanoclaw-pi-01"
+
+    RegisterResponse:
+      type: object
+      properties:
+        node_id:
+          type: string
+        token:
+          type: string
+          description: JWT bearer token for authentication
+        expires_at:
+          type: string
+          format: date-time
+          description: Token expiration time
+        fleet_broker:
+          type: string
+          description: MQTT broker URL for real-time communication
+
+    HeartbeatRequest:
+      type: object
+      required:
+        - node_id
+      properties:
+        node_id:
+          type: string
+        uptime_seconds:
+          type: integer
+          description: Node uptime in seconds
+        free_memory_kb:
+          type: integer
+          description: Available RAM in KB
+        sensors_active:
+          type: integer
+          description: Number of active sensors
+        wifi_rssi:
+          type: integer
+          description: WiFi signal strength (dBm)
+
+    HeartbeatResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [ok, warning]
+        next_heartbeat_seconds:
+          type: integer
+          description: Recommended interval for next heartbeat
+        commands_pending:
+          type: integer
+          description: Number of pending commands
+
+    EventsRequest:
+      type: object
+      required:
+        - node_id
+        - events
+      properties:
+        node_id:
+          type: string
+        events:
+          type: array
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/Event'
+
+    Event:
+      type: object
+      required:
+        - event_type
+        - timestamp
+      properties:
+        event_type:
+          type: string
+          enum: [sensor_reading, alert, error, status_change]
+        timestamp:
+          type: string
+          format: date-time
+        sensor_type:
+          type: string
+          example: "dht22"
+        severity:
+          type: string
+          enum: [info, warning, error, critical]
+        message:
+          type: string
+        data:
+          type: object
+          additionalProperties: true
+
+    EventsResponse:
+      type: object
+      properties:
+        events_received:
+          type: integer
+        events_stored:
+          type: integer
+
+    CommandPollRequest:
+      type: object
+      required:
+        - node_id
+      properties:
+        node_id:
+          type: string
+
+    CommandPollResponse:
+      type: object
+      properties:
+        commands:
+          type: array
+          items:
+            $ref: '#/components/schemas/Command'
+
+    Command:
+      type: object
+      properties:
+        command_id:
+          type: string
+        command_type:
+          type: string
+          enum: [restart, update, config, custom]
+        issued_at:
+          type: string
+          format: date-time
+        params:
+          type: object
+          additionalProperties: true
+
+    CommandAckRequest:
+      type: object
+      required:
+        - command_id
+        - status
+      properties:
+        command_id:
+          type: string
+        status:
+          type: string
+          enum: [success, failed, timeout]
+        executed_at:
+          type: string
+          format: date-time
+        result:
+          type: object
+          additionalProperties: true
+
+    CommandAckResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [ok]
+
+    NodeList:
+      type: object
+      properties:
+        nodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/NodeSummary'
+        pagination:
+          type: object
+          properties:
+            page:
+              type: integer
+            limit:
+              type: integer
+            total:
+              type: integer
+
+    NodeSummary:
+      type: object
+      properties:
+        node_id:
+          type: string
+        node_type:
+          type: string
+        status:
+          type: string
+          enum: [online, offline, down]
+        last_heartbeat:
+          type: string
+          format: date-time
+        metadata:
+          type: object
+          additionalProperties: true
+
+    NodeDetails:
+      allOf:
+        - $ref: '#/components/schemas/NodeSummary'
+        - type: object
+          properties:
+            hardware:
+              type: object
+            capabilities:
+              type: array
+              items:
+                type: string
+            registered_at:
+              type: string
+              format: date-time
+            uptime_seconds:
+              type: integer
+            free_memory_kb:
+              type: integer
+            sensors_active:
+              type: integer
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+          description: Human-readable error description
