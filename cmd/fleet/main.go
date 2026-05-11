@@ -6,7 +6,10 @@ package main
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"os"
+
+	"github.com/Clawland-AI/clawland-fleet/pkg/fleet"
 )
 
 const version = "0.1.0"
@@ -22,4 +25,6 @@ func main() {
 	fmt.Println("   Waiting for edge agent registrations...")
 
 	log.Printf("Fleet Manager listening on :%s", port)
+	server := fleet.NewServer(fleet.NewRegistry(), fleet.NewEventHub(1000))
+	log.Fatal(http.ListenAndServe(":"+port, server))
 }

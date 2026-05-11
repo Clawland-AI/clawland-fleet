@@ -18,6 +18,15 @@ Clawland Fleet is the **nervous system** connecting cloud and edge. It provides 
 - **Health Dashboard** — Real-time monitoring with alerting
 - **OTA Orchestrator** — Rolling firmware/skill updates with rollback
 
+Implemented Fleet Manager endpoints:
+
+- `POST /fleet/register` — register or refresh edge nodes
+- `POST /fleet/heartbeat` — update node status and metrics
+- `GET /fleet/nodes` — list active or offline nodes
+- `GET /fleet/nodes/{id}` — fetch one node
+- `POST /fleet/events` — report sensor, alert, or lifecycle events
+- `GET /fleet/events?node_id=X&type=Y&since=Z` — query the bounded event buffer
+
 ### Edge API Server (runs on PicClaw)
 - **REST/gRPC API** — Receive commands from cloud
 - **Local Task Queue** — Buffer commands during offline periods
