@@ -50,6 +50,14 @@ func (r *Registry) Heartbeat(nodeID string) bool {
 	return false
 }
 
+// Get returns a registered node by ID.
+func (r *Registry) Get(nodeID string) (*Node, bool) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	node, ok := r.nodes[nodeID]
+	return node, ok
+}
+
 // List returns all registered nodes.
 func (r *Registry) List() []*Node {
 	r.mu.RLock()

@@ -49,6 +49,78 @@ Clawland Fleet is the **nervous system** connecting cloud and edge. It provides 
   └────────┘    └────────┘    └────────┘
 ```
 
+## Fleet Manager API
+
+### Register a node
+
+`POST /fleet/register` registers an edge node so commands can be queued for it.
+
+```json
+{
+  "id": "picclaw-001",
+  "name": "PicClaw 001",
+  "type": "picclaw",
+  "capabilities": ["camera", "gpio"],
+  "location": "lab-a"
+}
+```
+
+### Dispatch a command
+
+`POST /fleet/command` queues a cloud-to-edge command for a registered node.
+
+```json
+{
+  "node_id": "picclaw-001",
+  "type": "restart",
+  "payload": {
+    "reason": "maintenance"
+  }
+}
+```
+
+Supported command types are `restart`, `update_config`, `execute_skill`, and `firmware_update`.
+Queued commands start as `pending` and are tracked through `delivered`, `executed`, or `failed`.
+
+### Deliver queued commands on heartbeat
+
+`POST /fleet/heartbeat` updates the node heartbeat and returns commands queued for that node:
+
+```json
+{
+  "node_id": "picclaw-001"
+}
+```
+
+```json
+{
+  "ok": true,
+  "commands": [
+    {
+      "id": "cmd-1",
+      "node_id": "picclaw-001",
+      "type": "restart",
+      "status": "delivered"
+    }
+  ]
+}
+```
+
+Queues and command status are currently in-memory.
+
+### Update or read command status
+
+Edge nodes report execution results with `POST /fleet/command/status`:
+
+```json
+{
+  "command_id": "cmd-1",
+  "status": "executed"
+}
+```
+
+Use `GET /fleet/command?id=cmd-1` to read the latest tracked status.
+
 ## Status
 
 🚧 **Pre-Alpha** — Architecture design phase. Looking for contributors!
