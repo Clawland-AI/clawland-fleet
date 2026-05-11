@@ -30,6 +30,11 @@ Clawland Fleet is the **nervous system** connecting cloud and edge. It provides 
 
 ## Architecture
 
+Fleet protocol and deployment references:
+
+- [Fleet Manager OpenAPI specification](api/fleet.openapi.yaml)
+- [Deployment architecture diagrams](docs/deployment-architecture.md)
+
 ```
 ┌─────────────────────────────────────────┐
 │           Fleet Manager (Cloud)          │
