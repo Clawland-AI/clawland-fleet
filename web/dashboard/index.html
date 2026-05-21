@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Clawland Fleet Dashboard</title>
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Clawland Fleet</p>
+        <h1>Fleet Manager Dashboard</h1>
+      </div>
+      <div class="topbar__meta">
+        <span id="lastUpdated">Loading...</span>
+        <button id="refreshButton" type="button">Refresh</button>
+      </div>
+    </header>
+
+    <main class="dashboard">
+      <section class="metrics" aria-label="Fleet summary">
+        <article>
+          <span>Total Nodes</span>
+          <strong id="totalNodes">0</strong>
+        </article>
+        <article>
+          <span>Online</span>
+          <strong id="onlineNodes">0</strong>
+        </article>
+        <article>
+          <span>Degraded</span>
+          <strong id="degradedNodes">0</strong>
+        </article>
+        <article>
+          <span>Open Alerts</span>
+          <strong id="openAlerts">0</strong>
+        </article>
+      </section>
+
+      <section class="layout">
+        <div class="panel panel--wide">
+          <div class="panel__header">
+            <h2>Node Status</h2>
+            <div class="segmented" role="tablist" aria-label="Node filter">
+              <button class="is-active" data-filter="all" type="button">All</button>
+              <button data-filter="online" type="button">Online</button>
+              <button data-filter="degraded" type="button">Degraded</button>
+              <button data-filter="offline" type="button">Offline</button>
+            </div>
+          </div>
+          <div id="nodeList" class="node-list" aria-live="polite"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel__header">
+            <h2>Alerts</h2>
+            <span id="criticalCount" class="badge badge--critical">0 critical</span>
+          </div>
+          <div id="alertList" class="alert-list" aria-live="polite"></div>
+        </div>
+      </section>
+
+      <section class="layout">
+        <div class="panel panel--wide">
+          <div class="panel__header">
+            <h2>Map View</h2>
+            <span class="hint">Geolocated edge nodes</span>
+          </div>
+          <div id="map" class="map" aria-label="Fleet map"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel__header">
+            <h2>Dispatch Command</h2>
+            <span class="hint">Queued locally in demo mode</span>
+          </div>
+          <form id="commandForm" class="command-form">
+            <label>
+              Node
+              <select id="commandNode" name="node"></select>
+            </label>
+            <label>
+              Command
+              <select id="commandType" name="command">
+                <option value="skill.restart">Restart skill</option>
+                <option value="sensor.recalibrate">Recalibrate sensor</option>
+                <option value="config.sync">Sync configuration</option>
+                <option value="ota.check">Check OTA update</option>
+              </select>
+            </label>
+            <label>
+              Payload
+              <textarea id="commandPayload" name="payload" rows="5">{"skill":"aquaculture-monitoring"}</textarea>
+            </label>
+            <button type="submit">Queue Command</button>
+          </form>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel__header">
+          <h2>Command Queue</h2>
+          <span id="queuedCount" class="hint">0 queued</span>
+        </div>
+        <div id="commandList" class="command-list"></div>
+      </section>
+    </main>
+
+    <script src="./app.js" defer></script>
+  </body>
+</html>

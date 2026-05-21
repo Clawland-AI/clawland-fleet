@@ -1,0 +1,118 @@
+{
+  "generated_at": "2026-05-21T15:45:00Z",
+  "nodes": [
+    {
+      "id": "pond-guardian-01",
+      "name": "Pond Guardian 01",
+      "type": "picclaw",
+      "status": "online",
+      "location": "Guangdong Pond A",
+      "latitude": 23.1291,
+      "longitude": 113.2644,
+      "last_seen": "2026-05-21T15:44:48Z",
+      "capabilities": ["aquaculture-monitoring", "relay-control", "sensor.water_quality"],
+      "metrics": {
+        "cpu_percent": 34,
+        "memory_mb": 6.4,
+        "battery_percent": 88,
+        "latency_ms": 142
+      }
+    },
+    {
+      "id": "cold-chain-truck-07",
+      "name": "Cold Chain Truck 07",
+      "type": "picclaw",
+      "status": "degraded",
+      "location": "Shanghai Route B",
+      "latitude": 31.2304,
+      "longitude": 121.4737,
+      "last_seen": "2026-05-21T15:42:10Z",
+      "capabilities": ["cold-chain-compliance", "gps", "temperature"],
+      "metrics": {
+        "cpu_percent": 51,
+        "memory_mb": 7.2,
+        "battery_percent": 41,
+        "latency_ms": 640
+      }
+    },
+    {
+      "id": "greenhouse-edge-03",
+      "name": "Greenhouse Edge 03",
+      "type": "nanoclaw",
+      "status": "online",
+      "location": "Chengdu Greenhouse",
+      "latitude": 30.5728,
+      "longitude": 104.0668,
+      "last_seen": "2026-05-21T15:44:59Z",
+      "capabilities": ["greenhouse-climate", "irrigation-control", "camera"],
+      "metrics": {
+        "cpu_percent": 27,
+        "memory_mb": 128.5,
+        "battery_percent": 100,
+        "latency_ms": 210
+      }
+    },
+    {
+      "id": "warehouse-guard-02",
+      "name": "Warehouse Guard 02",
+      "type": "microclaw",
+      "status": "offline",
+      "location": "Suzhou Warehouse",
+      "latitude": 31.2989,
+      "longitude": 120.5853,
+      "last_seen": "2026-05-21T14:58:03Z",
+      "capabilities": ["motion-detect", "door-sensor"],
+      "metrics": {
+        "cpu_percent": 0,
+        "memory_mb": 0,
+        "battery_percent": 16,
+        "latency_ms": null
+      }
+    }
+  ],
+  "alerts": [
+    {
+      "id": "alert-001",
+      "node_id": "cold-chain-truck-07",
+      "severity": "critical",
+      "title": "Temperature excursion",
+      "message": "Cargo bay has been above 8 C for 18 minutes.",
+      "timestamp": "2026-05-21T15:37:12Z",
+      "acknowledged": false
+    },
+    {
+      "id": "alert-002",
+      "node_id": "warehouse-guard-02",
+      "severity": "warning",
+      "title": "Node offline",
+      "message": "No heartbeat received for 47 minutes.",
+      "timestamp": "2026-05-21T15:45:00Z",
+      "acknowledged": false
+    },
+    {
+      "id": "alert-003",
+      "node_id": "pond-guardian-01",
+      "severity": "info",
+      "title": "Preventive aeration complete",
+      "message": "Dissolved oxygen recovered to 5.6 mg/L.",
+      "timestamp": "2026-05-21T15:22:18Z",
+      "acknowledged": true
+    }
+  ],
+  "commands": [
+    {
+      "id": "cmd-101",
+      "node_id": "pond-guardian-01",
+      "command": "skill.restart",
+      "status": "completed",
+      "created_at": "2026-05-21T14:15:00Z"
+    },
+    {
+      "id": "cmd-102",
+      "node_id": "cold-chain-truck-07",
+      "command": "sensor.recalibrate",
+      "status": "queued",
+      "created_at": "2026-05-21T15:39:42Z"
+    }
+  ]
+}

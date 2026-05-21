@@ -18,6 +18,19 @@ Clawland Fleet is the **nervous system** connecting cloud and edge. It provides 
 - **Health Dashboard** — Real-time monitoring with alerting
 - **OTA Orchestrator** — Rolling firmware/skill updates with rollback
 
+### Dashboard Preview
+
+The first Fleet Manager dashboard lives in `web/dashboard/`. It is a
+dependency-free static UI for node status, alert aggregation, command dispatch,
+and geolocated node monitoring.
+
+```bash
+cd web/dashboard
+python3 -m http.server 8088
+```
+
+Open `http://localhost:8088` to preview the dashboard with sample fleet data.
+
 ### Edge API Server (runs on PicClaw)
 - **REST/gRPC API** — Receive commands from cloud
 - **Local Task Queue** — Buffer commands during offline periods
