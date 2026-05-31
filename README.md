@@ -35,6 +35,14 @@ The repository includes a dependency-free web dashboard at [`web/dashboard`](web
 Preview it locally from the repository root:
 
 ```sh
+go run ./cmd/fleet
+```
+
+Then open `http://127.0.0.1:8080`. The server exposes dashboard data at `GET /fleet/dashboard/state` and queues dashboard commands through `POST /fleet/command`.
+
+For a static-only preview:
+
+```sh
 python3 -m http.server 8088 -d web/dashboard
 ```
 

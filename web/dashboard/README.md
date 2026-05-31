@@ -8,12 +8,20 @@ This directory contains a dependency-free Fleet Manager dashboard for the Clawla
 - Alert aggregation with critical, warning, and info severity states.
 - Command dispatch form for restart, config update, skill execution, and firmware update operations.
 - Geolocated node map using fixture coordinates.
-- Session-local command queue preview.
-- Fixture-backed data loading that can be replaced with Fleet Manager API responses later.
+- Command queue preview backed by `POST /fleet/command` when the Fleet Manager server is running.
+- API-backed data loading from `GET /fleet/dashboard/state`, with fixture fallback for static previews.
 
 ## Local preview
 
-From the repository root:
+With the Fleet Manager API and dashboard server:
+
+```sh
+go run ./cmd/fleet
+```
+
+Then open `http://127.0.0.1:8080`.
+
+For a static-only preview:
 
 ```sh
 python3 -m http.server 8088 -d web/dashboard
@@ -23,7 +31,7 @@ Then open `http://127.0.0.1:8088`.
 
 ## API integration notes
 
-The dashboard currently loads `fixtures/fleet-state.json`. A production Fleet Manager can replace that fixture with an endpoint returning:
+The dashboard first loads `GET /fleet/dashboard/state`, then falls back to `fixtures/fleet-state.json` for static previews. The state response is:
 
 ```json
 {
@@ -34,3 +42,12 @@ The dashboard currently loads `fixtures/fleet-state.json`. A production Fleet Ma
 ```
 
 Commands are queued in the browser session today. When the command dispatch API is available, the submit handler in `app.js` can post `{ node_id, type, payload }` to `POST /fleet/command` and then render the returned command status.
+Commands are submitted to `POST /fleet/command`:
+
+```json
+{
+  "node_id": "pond-a-picoclaw",
+  "type": "restart",
+  "payload": { "reason": "operator requested" }
+}
+```

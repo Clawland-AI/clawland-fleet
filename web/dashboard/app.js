@@ -24,12 +24,23 @@ const els = {
 };
 
 async function loadFleetState() {
+  const response = await fetchFleetState();
+  state.data = response;
+  state.commands = response.commands ?? state.commands;
+  render();
+}
+
+async function fetchFleetState() {
+  const apiResponse = await fetch("/fleet/dashboard/state", { cache: "no-store" });
+  if (apiResponse.ok) {
+    return apiResponse.json();
+  }
+
   const response = await fetch("./fixtures/fleet-state.json", { cache: "no-store" });
   if (!response.ok) {
     throw new Error(`Unable to load fleet fixture: ${response.status}`);
   }
-  state.data = await response.json();
-  render();
+  return response.json();
 }
 
 function byStatus(status) {
@@ -152,7 +163,10 @@ function renderCommandQueue() {
       ? state.commands.map((command) => {
           const item = document.createElement("div");
           item.className = "queue-item";
-          item.textContent = `${command.type} queued for ${command.nodeId} at ${command.createdAt}`;
+          const createdAt = command.created_at
+            ? new Date(command.created_at).toLocaleTimeString()
+            : command.createdAt;
+          item.textContent = `${command.type} ${command.status ?? "queued"} for ${command.node_id ?? command.nodeId} at ${createdAt}`;
           return item;
         })
       : [emptyMessage("No commands queued in this browser session")]),
@@ -223,14 +237,45 @@ els.liveToggle.addEventListener("change", () => {
 
 els.commandForm.addEventListener("submit", (event) => {
   event.preventDefault();
-  state.commands.unshift({
-    nodeId: els.commandNode.value,
-    type: els.commandType.value,
-    payload: els.commandPayload.value,
-    createdAt: new Date().toLocaleTimeString(),
+  queueCommand().catch((error) => {
+    state.commands.unshift({
+      node_id: els.commandNode.value,
+      type: els.commandType.value,
+      payload: els.commandPayload.value,
+      status: "local",
+      created_at: new Date().toISOString(),
+      error: error.message,
+    });
+    renderCommandQueue();
   });
-  renderCommandQueue();
 });
+
+async function queueCommand() {
+  let payload;
+  try {
+    payload = els.commandPayload.value.trim() ? JSON.parse(els.commandPayload.value) : {};
+  } catch {
+    payload = { raw: els.commandPayload.value };
+  }
+
+  const response = await fetch("/fleet/command", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      node_id: els.commandNode.value,
+      type: els.commandType.value,
+      payload,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Command API returned ${response.status}`);
+  }
+  const command = await response.json();
+  state.commands.unshift(command);
+  renderCommandQueue();
+  await loadFleetState();
+}
 
 await loadFleetState();
 startPolling();
