@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Clawland Fleet Dashboard</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">MoltClaw Fleet Manager</p>
+          <h1>Fleet Dashboard</h1>
+        </div>
+        <div class="toolbar" aria-label="Dashboard controls">
+          <button class="icon-button" id="refreshButton" type="button" title="Refresh fleet data" aria-label="Refresh fleet data">
+            <span aria-hidden="true">R</span>
+          </button>
+          <label class="toggle">
+            <input id="liveToggle" type="checkbox" checked />
+            <span>Live</span>
+          </label>
+        </div>
+      </header>
+
+      <section class="metrics" aria-label="Fleet summary">
+        <article>
+          <span id="onlineCount">0</span>
+          <p>Online</p>
+        </article>
+        <article>
+          <span id="degradedCount">0</span>
+          <p>Degraded</p>
+        </article>
+        <article>
+          <span id="offlineCount">0</span>
+          <p>Offline</p>
+        </article>
+        <article>
+          <span id="criticalCount">0</span>
+          <p>Critical alerts</p>
+        </article>
+      </section>
+
+      <section class="main-grid">
+        <section class="panel fleet-panel" aria-labelledby="fleetTitle">
+          <div class="panel-heading">
+            <div>
+              <h2 id="fleetTitle">Nodes</h2>
+              <p id="lastUpdated">Waiting for data</p>
+            </div>
+            <div class="segmented" role="group" aria-label="Filter nodes by status">
+              <button class="segment active" type="button" data-filter="all">All</button>
+              <button class="segment" type="button" data-filter="online">Online</button>
+              <button class="segment" type="button" data-filter="degraded">Degraded</button>
+              <button class="segment" type="button" data-filter="offline">Offline</button>
+            </div>
+          </div>
+          <div class="node-list" id="nodeList" aria-live="polite"></div>
+        </section>
+
+        <section class="panel map-panel" aria-labelledby="mapTitle">
+          <div class="panel-heading">
+            <div>
+              <h2 id="mapTitle">Map</h2>
+              <p>Geolocated node health</p>
+            </div>
+          </div>
+          <div class="map" id="mapCanvas" role="img" aria-label="Map showing fleet node positions"></div>
+        </section>
+
+        <section class="panel alerts-panel" aria-labelledby="alertsTitle">
+          <div class="panel-heading">
+            <div>
+              <h2 id="alertsTitle">Alerts</h2>
+              <p>Open incidents grouped by severity</p>
+            </div>
+          </div>
+          <div class="alert-list" id="alertList" aria-live="polite"></div>
+        </section>
+
+        <section class="panel command-panel" aria-labelledby="commandTitle">
+          <div class="panel-heading">
+            <div>
+              <h2 id="commandTitle">Command Dispatch</h2>
+              <p>Queue cloud-to-edge commands</p>
+            </div>
+          </div>
+          <form id="commandForm" class="command-form">
+            <label>
+              Node
+              <select id="commandNode" required></select>
+            </label>
+            <label>
+              Command
+              <select id="commandType" required>
+                <option value="restart">Restart</option>
+                <option value="update_config">Update config</option>
+                <option value="execute_skill">Execute skill</option>
+                <option value="firmware_update">Firmware update</option>
+              </select>
+            </label>
+            <label>
+              Payload
+              <textarea id="commandPayload" rows="5" spellcheck="false">{ "reason": "operator requested" }</textarea>
+            </label>
+            <button class="primary" type="submit">Queue command</button>
+          </form>
+          <div class="queue" id="commandQueue" aria-live="polite"></div>
+        </section>
+      </section>
+    </main>
+
+    <script src="./app.js" type="module"></script>
+  </body>
+</html>

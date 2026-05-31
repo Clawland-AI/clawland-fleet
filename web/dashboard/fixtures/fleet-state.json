@@ -1,0 +1,108 @@
+{
+  "generated_at": "2026-05-31T17:00:00Z",
+  "nodes": [
+    {
+      "id": "pond-a-picoclaw",
+      "name": "Pond A Gateway",
+      "type": "picclaw",
+      "status": "online",
+      "pending_commands": 0,
+      "capabilities": ["aquaculture-monitoring", "mqtt", "edge-api"],
+      "location": {
+        "name": "North pond",
+        "lat": 37.781,
+        "lng": -122.404,
+        "map_x": 32,
+        "map_y": 48
+      },
+      "metrics": {
+        "battery": 92,
+        "temperature_c": 24.1,
+        "signal_dbm": -54
+      }
+    },
+    {
+      "id": "greenhouse-3-nanoclaw",
+      "name": "Greenhouse 3",
+      "type": "nanoclaw",
+      "status": "degraded",
+      "pending_commands": 2,
+      "capabilities": ["greenhouse", "relay-control", "camera"],
+      "location": {
+        "name": "West greenhouse",
+        "lat": 37.786,
+        "lng": -122.411,
+        "map_x": 58,
+        "map_y": 36
+      },
+      "metrics": {
+        "battery": 41,
+        "temperature_c": 31.6,
+        "signal_dbm": -82
+      }
+    },
+    {
+      "id": "cold-chain-van-12",
+      "name": "Van 12",
+      "type": "picclaw",
+      "status": "online",
+      "pending_commands": 1,
+      "capabilities": ["cold-chain", "gps", "audit-log"],
+      "location": {
+        "name": "Downtown route",
+        "lat": 37.774,
+        "lng": -122.419,
+        "map_x": 44,
+        "map_y": 66
+      },
+      "metrics": {
+        "battery": 77,
+        "temperature_c": 3.8,
+        "signal_dbm": -63
+      }
+    },
+    {
+      "id": "warehouse-door-2",
+      "name": "Warehouse Door 2",
+      "type": "microclaw",
+      "status": "offline",
+      "pending_commands": 0,
+      "capabilities": ["door-sensor", "pir"],
+      "location": {
+        "name": "Loading dock",
+        "lat": 37.769,
+        "lng": -122.398,
+        "map_x": 72,
+        "map_y": 55
+      },
+      "metrics": {
+        "battery": 12,
+        "temperature_c": 18.4,
+        "signal_dbm": -96
+      }
+    }
+  ],
+  "alerts": [
+    {
+      "id": "alert-001",
+      "node_id": "warehouse-door-2",
+      "severity": "critical",
+      "title": "Node missed three heartbeats",
+      "created_at": "2026-05-31T16:48:00Z"
+    },
+    {
+      "id": "alert-002",
+      "node_id": "greenhouse-3-nanoclaw",
+      "severity": "warning",
+      "title": "Signal quality below deployment threshold",
+      "created_at": "2026-05-31T16:54:00Z"
+    },
+    {
+      "id": "alert-003",
+      "node_id": "cold-chain-van-12",
+      "severity": "info",
+      "title": "Firmware update waiting for maintenance window",
+      "created_at": "2026-05-31T15:22:00Z"
+    }
+  ]
+}

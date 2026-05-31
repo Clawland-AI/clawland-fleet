@@ -28,6 +28,18 @@ Clawland Fleet is the **nervous system** connecting cloud and edge. It provides 
 - **Batch Upload** — Compress and send sensor data on schedule
 - **Offline Buffer** — Store-and-forward when connectivity is lost
 
+## Fleet Dashboard
+
+The repository includes a dependency-free web dashboard at [`web/dashboard`](web/dashboard/README.md). It provides a node status board, alert aggregation, command dispatch controls, and a geolocated fleet map backed by a sample fleet snapshot.
+
+Preview it locally from the repository root:
+
+```sh
+python3 -m http.server 8088 -d web/dashboard
+```
+
+Then open `http://127.0.0.1:8088`.
+
 ## Architecture
 
 ```
