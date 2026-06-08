@@ -28,6 +28,59 @@ Clawland Fleet is the **nervous system** connecting cloud and edge. It provides 
 - **Batch Upload** — Compress and send sensor data on schedule
 - **Offline Buffer** — Store-and-forward when connectivity is lost
 
+## Fleet Manager API
+
+Start the HTTP service:
+
+```bash
+go run ./cmd/fleet
+```
+
+Set `PORT` to listen on a different port:
+
+```bash
+PORT=9090 go run ./cmd/fleet
+```
+
+Register an edge node:
+
+```bash
+curl -X POST http://localhost:8080/fleet/register \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "node_id": "picclaw-1",
+    "type": "picclaw",
+    "capabilities": ["temperature", "humidity"],
+    "location": "greenhouse-a"
+  }'
+```
+
+Send a heartbeat with status and metrics:
+
+```bash
+curl -X POST http://localhost:8080/fleet/heartbeat \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "node_id": "picclaw-1",
+    "status": "online",
+    "metrics": {"cpu": 0.41, "battery": 0.87}
+  }'
+```
+
+List all nodes, or filter by status:
+
+```bash
+curl http://localhost:8080/fleet/nodes
+curl http://localhost:8080/fleet/nodes?status=online
+curl http://localhost:8080/fleet/nodes?status=offline
+```
+
+Read a single node:
+
+```bash
+curl http://localhost:8080/fleet/nodes/picclaw-1
+```
+
 ## Architecture
 
 ```
