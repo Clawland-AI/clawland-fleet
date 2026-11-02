@@ -2,6 +2,8 @@
 
 **Cloud-Edge orchestration platform — Fleet Manager, Edge API Server, and Edge Reporter for managing distributed Claw agents.**
 
+[English](README.md) | [简体中文](README_CN.md)
+
 > Part of the [Clawland](https://github.com/Clawland-AI) ecosystem.
 
 ---
